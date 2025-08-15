@@ -1,75 +1,167 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Карта из Google Таблицы</title>
+  <title>Карта с адресами из Google Таблицы</title>
   <script src="https://api-maps.yandex.ru/2.1/?apikey=e99b0b22-e0ed-4965-89bd-c4ff4a9c1aed&lang=ru_RU"></script>
   <style>
-    #map { width: 100%; height: 500px; margin-bottom: 20px; }
-    #address-list { 
-      font-family: Arial, sans-serif; 
-      max-width: 800px; 
-      margin: 0 auto; 
-      padding: 10px;
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    #map {
+      width: 100%;
+      height: 500px;
+      margin-bottom: 20px;
       border: 1px solid #ddd;
       border-radius: 5px;
     }
-    .address-item { 
-      padding: 8px; 
-      border-bottom: 1px solid #eee; 
+    #address-list {
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      padding: 15px;
+      background: #f9f9f9;
     }
-    .address-item:last-child { border-bottom: none; }
-    .address-label { font-weight: bold; color: #1a73e8; }
+    .address-item {
+      padding: 10px;
+      border-bottom: 1px solid #eee;
+    }
+    .address-item:last-child {
+      border-bottom: none;
+    }
+    .address-label {
+      font-weight: bold;
+      color: #1a73e8;
+    }
+    .pagination {
+      display: flex;
+      justify-content: center;
+      margin-top: 20px;
+    }
+    .pagination button {
+      margin: 0 5px;
+      padding: 5px 10px;
+      background: #1a73e8;
+      color: white;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+    .pagination button:disabled {
+      background: #ccc;
+      cursor: default;
+    }
+    #loading {
+      text-align: center;
+      padding: 10px;
+      font-style: italic;
+      color: #666;
+    }
   </style>
 </head>
 <body>
-  <h1 style="text-align: center;">Мои метки на карте</h1>
+  <h1 style="text-align: center;">Метки на карте</h1>
   <div id="map"></div>
+  
   <div id="address-list">
     <h2 style="text-align: center;">Список адресов</h2>
-    <!-- Сюда загрузится список -->
+    <div id="loading">Загрузка данных...</div>
+    <div id="list-container"></div>
+    <div class="pagination">
+      <button id="prev-page" disabled>Назад</button>
+      <span id="page-info">Страница 1</span>
+      <button id="next-page">Вперед</button>
+    </div>
   </div>
 
   <script>
     ymaps.ready(init);
 
+    // Глобальные переменные для пагинации
+    let allAddresses = [];
+    const itemsPerPage = 100;
+    let currentPage = 1;
+
     function init() {
-      const map = new ymaps.Map("map", { 
+      const map = new ymaps.Map("map", {
         center: [54.63, 39.74], // Рязань
-        zoom: 12 
+        zoom: 12
       });
 
-      // Получаем данные из Google Apps Script
+      // Загрузка данных
       fetch("https://script.google.com/macros/s/AKfycbw2jhg4RALhOuroZFdVAqPK9b75zkVbbvSscMRufyUUceQ1KdyjcnJKY2JlZObTTylR/exec")
         .then(response => response.json())
         .then(data => {
-          const addressList = document.getElementById("address-list");
-          let listHTML = "";
-
-          data.forEach(item => {
-            if (!item.address) return;
-
-            // Добавляем метку на карту
-            ymaps.geocode(item.address).then(function(res) {
-              const firstGeoObject = res.geoObjects.get(0);
-              const coordinates = firstGeoObject.geometry.getCoordinates();
-              
-              const placemark = new ymaps.Placemark(
-                coordinates,
-                { balloonContent: `<b>${item.label || "Метка"}</b><br>${item.address}` }
-              );
-              map.geoObjects.add(placemark);
-
-              // Добавляем адрес в список под картой
-              listHTML += `
-                <div class="address-item">
-                  <span class="address-label">${item.label || "Без названия"}:</span>
-                  <span>${item.address}</span>
-                </div>
-              `;
-              addressList.innerHTML += listHTML;
-            });
-          });
+          document.getElementById("loading").style.display = "none";
+          allAddresses = data.filter(item => item.address); // Фильтруем пустые адреса
+          renderAddressList();
+          addMarkersToMap(map, allAddresses);
+        })
+        .catch(error => {
+          document.getElementById("loading").textContent = "Ошибка загрузки данных";
+          console.error("Error:", error);
         });
+
+      // Навигация по страницам
+      document.getElementById("prev-page").addEventListener("click", () => {
+        if (currentPage > 1) {
+          currentPage--;
+          renderAddressList();
+        }
+      });
+
+      document.getElementById("next-page").addEventListener("click", () => {
+        if (currentPage * itemsPerPage < allAddresses.length) {
+          currentPage++;
+          renderAddressList();
+        }
+      });
+    }
+
+    // Отрисовка списка адресов с пагинацией
+    function renderAddressList() {
+      const start = (currentPage - 1) * itemsPerPage;
+      const end = start + itemsPerPage;
+      const pageData = allAddresses.slice(start, end);
+
+      let listHTML = "";
+      pageData.forEach(item => {
+        listHTML += `
+          <div class="address-item">
+            <span class="address-label">${item.label || "Без названия"}:</span>
+            <span>${item.address}</span>
+          </div>
+        `;
+      });
+
+      document.getElementById("list-container").innerHTML = listHTML;
+      document.getElementById("page-info").textContent = `Страница ${currentPage} из ${Math.ceil(allAddresses.length / itemsPerPage)}`;
+      
+      // Блокировка кнопок навигации
+      document.getElementById("prev-page").disabled = currentPage === 1;
+      document.getElementById("next-page").disabled = currentPage * itemsPerPage >= allAddresses.length;
+    }
+
+    // Добавление меток на карту
+    function addMarkersToMap(map, addresses) {
+      addresses.forEach(item => {
+        ymaps.geocode(item.address).then(function(res) {
+          const firstGeoObject = res.geoObjects.get(0);
+          if (firstGeoObject) {
+            const placemark = new ymaps.Placemark(
+              firstGeoObject.geometry.getCoordinates(),
+              {
+                balloonContent: `
+                  <b>${item.label || "Метка"}</b><br>
+                  ${item.address}
+                `
+              }
+            );
+            map.geoObjects.add(placemark);
+          }
+        });
+      });
     }
   </script>
 </body>
