@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Карта из Google Таблицы</title>
+  <script src="https://api-maps.yandex.ru/2.1/?apikey=e99b0b22-e0ed-4965-89bd-c4ff4a9c1aed&lang=ru_RU"></script>
+  <script>
+    ymaps.ready(init);
+
+    function init() {
+      const map = new ymaps.Map("map", { center: [54.63, 39.74], zoom: 10 });
+
+      fetch("https://script.google.com/macros/s/AKfycbw2jhg4RALhOuroZFdVAqPK9b75zkVbbvSscMRufyUUceQ1KdyjcnJKY2JlZObTTylR/exec")
+        .then(response => response.json())
+        .then(data => {
+          data.forEach(item => {
+            if (!item.address) return;
+            ymaps.geocode(item.address).then(function(res) {
+              const firstGeoObject = res.geoObjects.get(0);
+              map.geoObjects.add(
+                new ymaps.Placemark(
+                  firstGeoObject.geometry.getCoordinates(),
+                  { balloonContent: item.label }
+                )
+              );
+            });
+          });
+        });
+    }
+  </script>
+</head>
+<body>
+  <div id="map" style="width: 100%; height: 600px;"></div>
+</body>
+</html>
