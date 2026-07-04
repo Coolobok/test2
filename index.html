@@ -1073,7 +1073,6 @@
                     this.userMarkersCollection.add(placemark);
                 });
                 this.bringUserMarkersToFront();
-                StateModule.updateURL();
             },
 
             createPlacemark(marker, index) {
@@ -3617,7 +3616,6 @@ const StateModule = {
             }
             this.applyState(state);
             Utils.showNotification('Настройки восстановлены', 'success');
-            window.history.replaceState({}, document.title, window.location.pathname);
         } catch(e) { 
             logError('State', 'Ошибка применения состояния из URL', e);
             Utils.showNotification('Ошибка загрузки настроек', 'error'); 
