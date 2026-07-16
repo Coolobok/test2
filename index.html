@@ -2268,147 +2268,145 @@
                 if (otherCtrl) otherCtrl.setValues(min, max);
             },
 
-            initDistrictFilters(buildings, containerId, prefix, sliderStorageKey) {
-                const districts = [...new Set(buildings.map(b => b.district).filter(Boolean))];
-                const container = document.getElementById(containerId);
-                if (!container) return;
+			initDistrictFilters(buildings, containerId, prefix, sliderStorageKey) {
+				const districts = [...new Set(buildings.map(b => b.district).filter(Boolean))];
+				const container = document.getElementById(containerId);
+				if (!container) return;
 
-                const floorsValues = availableValues.floors.length ? availableValues.floors : [1];
-                const flatsValues = availableValues.flatsPerEntrance.length ? availableValues.flatsPerEntrance : [1];
+				const floorsValues = availableValues.floors.length ? availableValues.floors : [1];
+				const flatsValues = availableValues.flatsPerEntrance.length ? availableValues.flatsPerEntrance : [1];
 
-                const globalFloorsMin = floorsValues[0];
-                const globalFloorsMax = floorsValues[floorsValues.length - 1];
-                const globalFlatsMin = flatsValues[0];
-                const globalFlatsMax = flatsValues[flatsValues.length - 1];
+				const globalFloorsMin = floorsValues[0];
+				const globalFloorsMax = floorsValues[floorsValues.length - 1];
+				const globalFlatsMin = flatsValues[0];
+				const globalFlatsMax = flatsValues[flatsValues.length - 1];
 
-                districts.sort();
-                container.innerHTML = '';
-                districts.forEach(district => {
-                    if (!districtFilters[district]) {
-                        districtFilters[district] = {
-                            enabled: true,
-                            floors: { min: globalFloorsMin, max: globalFloorsMax },
-                            flatsPerEntrance: { min: globalFlatsMin, max: globalFlatsMax }
-                        };
-                    } else {
-                        if (districtFilters[district].enabled === undefined) districtFilters[district]
-                            .enabled = true;
-                    }
-                    if (districtFilters[district].enabled) activeFilters.district.add(district);
-                    else activeFilters.district.delete(district);
+				districts.sort();
+				container.innerHTML = '';
+				districts.forEach(district => {
+					if (!districtFilters[district]) {
+						districtFilters[district] = {
+							enabled: true,
+							floors: { min: globalFloorsMin, max: globalFloorsMax },
+							flatsPerEntrance: { min: globalFlatsMin, max: globalFlatsMax }
+						};
+					} else {
+						if (districtFilters[district].enabled === undefined) districtFilters[district].enabled = true;
+					}
+					if (districtFilters[district].enabled) activeFilters.district.add(district);
+					else activeFilters.district.delete(district);
 
-                    const df = districtFilters[district];
-                    const block = document.createElement('div');
-                    const blockClass = prefix ? 'district-filter-block-mobile' : 'district-filter-block';
-                    block.className = blockClass;
-                    if (!df.enabled) block.classList.add('disabled');
-                    block.dataset.district = district;
-                    if (prefix) block.dataset.districtMobile = district;
+					const df = districtFilters[district];
+					const block = document.createElement('div');
+					const blockClass = prefix ? 'district-filter-block-mobile' : 'district-filter-block';
+					block.className = blockClass;
+					if (!df.enabled) block.classList.add('disabled');
+					block.dataset.district = district;
+					if (prefix) block.dataset.districtMobile = district;
 
-                    const header = document.createElement('div');
-                    header.className = 'district-header';
+					const header = document.createElement('div');
+					header.className = 'district-header';
 
-                    const nameWrap = document.createElement('div');
-                    nameWrap.className = 'district-name-wrap';
-                    const cb = document.createElement('input');
-                    cb.type = 'checkbox';
-                    cb.className = 'district-enable';
-                    cb.checked = df.enabled;
-                    if (prefix) cb.dataset.districtMobile = district;
-                    else cb.dataset.district = district;
-                    cb.addEventListener('change', (e) => {
-                        df.enabled = e.target.checked;
-                        block.classList.toggle('disabled', !df.enabled);
-                        if (df.enabled) activeFilters.district.add(district);
-                        else activeFilters.district.delete(district);
-                        const isDesktop = !prefix;
-                        const otherContainerId = isDesktop ? 'mobile-district-filters' :
-                            'district-filters-container';
-                        const otherCb = document.querySelector(
-                            `#${otherContainerId} .district-enable[data-district${isDesktop ? '-mobile' : ''}="${district}"]`
-                            );
-                        if (otherCb) otherCb.checked = e.target.checked;
-                        const otherBlock = otherCb?.closest(isDesktop ?
-                            '.district-filter-block-mobile' : '.district-filter-block');
-                        if (otherBlock) otherBlock.classList.toggle('disabled', !df.enabled);
-                        this.applyFiltersDebounced();
-                        StateModule.updateURL();
-                    });
-                    nameWrap.appendChild(cb);
+					const nameWrap = document.createElement('div');
+					nameWrap.className = 'district-name-wrap';
+					const cb = document.createElement('input');
+					cb.type = 'checkbox';
+					cb.className = 'district-enable';
+					cb.checked = df.enabled;
+					if (prefix) cb.dataset.districtMobile = district;
+					else cb.dataset.district = district;
+					cb.addEventListener('change', (e) => {
+						df.enabled = e.target.checked;
+						block.classList.toggle('disabled', !df.enabled);
+						if (df.enabled) activeFilters.district.add(district);
+						else activeFilters.district.delete(district);
+						const isDesktop = !prefix;
+						const otherContainerId = isDesktop ? 'mobile-district-filters' : 'district-filters-container';
+						const otherCb = document.querySelector(
+							`#${otherContainerId} .district-enable[data-district${isDesktop ? '-mobile' : ''}="${district}"]`
+						);
+						if (otherCb) otherCb.checked = e.target.checked;
+						const otherBlock = otherCb?.closest(isDesktop ? '.district-filter-block-mobile' : '.district-filter-block');
+						if (otherBlock) otherBlock.classList.toggle('disabled', !df.enabled);
+						this.applyFiltersDebounced();
+						StateModule.updateURL();
+					});
+					nameWrap.appendChild(cb);
 
-                    const nameSpan = document.createElement('span');
-                    nameSpan.className = 'district-name';
-                    nameSpan.textContent = district;
-                    nameWrap.appendChild(nameSpan);
-                    header.appendChild(nameWrap);
+					const nameSpan = document.createElement('span');
+					nameSpan.className = 'district-name';
+					nameSpan.textContent = district;
+					nameWrap.appendChild(nameSpan);
+					header.appendChild(nameWrap);
 
-                    const statsSpan = document.createElement('span');
-                    statsSpan.className = 'district-stats';
-                    statsSpan.id = `${prefix}district-stats-${district}`;
-                    statsSpan.innerHTML =
-                        `<i class="fas fa-building"></i> <span class="selected-stands">0</span> из <span class="total-stands">0</span>`;
-                    header.appendChild(statsSpan);
-                    block.appendChild(header);
+					// ===== ИЗМЕНЕНИЕ: иконка заменена на fa-columns =====
+					const statsSpan = document.createElement('span');
+					statsSpan.className = 'district-stats';
+					statsSpan.id = `${prefix}district-stats-${district}`;
+					statsSpan.innerHTML =
+						`<i class="fas fa-columns"></i> <span class="selected-stands">0</span> из <span class="total-stands">0</span>`;
+					header.appendChild(statsSpan);
+					// ====================================================
 
-                    const floorsContainer = document.createElement('div');
-                    floorsContainer.className = 'range-slider-placeholder';
-                    floorsContainer.style.marginBottom = '0.25rem';
-                    floorsContainer.dataset.param = 'floors';
-                    block.appendChild(floorsContainer);
+					block.appendChild(header);
 
-                    const flatsContainer = document.createElement('div');
-                    flatsContainer.className = 'range-slider-placeholder';
-                    flatsContainer.dataset.param = 'flats';
-                    block.appendChild(flatsContainer);
+					const floorsContainer = document.createElement('div');
+					floorsContainer.className = 'range-slider-placeholder';
+					floorsContainer.style.marginBottom = '0.25rem';
+					floorsContainer.dataset.param = 'floors';
+					block.appendChild(floorsContainer);
 
-                    container.appendChild(block);
+					const flatsContainer = document.createElement('div');
+					flatsContainer.className = 'range-slider-placeholder';
+					flatsContainer.dataset.param = 'flats';
+					block.appendChild(flatsContainer);
 
-                    if (!this[sliderStorageKey][district]) this[sliderStorageKey][district] = {};
+					container.appendChild(block);
 
-                    const floorsCtrl = new RangeSlider(
-                        floorsContainer,
-                        globalFloorsMin,
-                        globalFloorsMax,
-                        df.floors.min,
-                        df.floors.max,
-                        (min, max) => {
-                            df.floors.min = min;
-                            df.floors.max = max;
-                            const syncCheck = document.getElementById('sync-floors');
-                            if (syncCheck && syncCheck.checked) this.syncDistrictFilter('floors',
-                                district, min, max, prefix);
-                            this.applyFiltersDebounced();
-                            StateModule.updateURL();
-                        },
-                        floorsValues, { isGlobal: false }
-                    );
-                    const lblF = floorsContainer.querySelector('.filter-range-label');
-                    if (lblF) lblF.textContent = 'ЭТАЖНОСТЬ';
+					if (!this[sliderStorageKey][district]) this[sliderStorageKey][district] = {};
 
-                    const flatsCtrl = new RangeSlider(
-                        flatsContainer,
-                        globalFlatsMin,
-                        globalFlatsMax,
-                        df.flatsPerEntrance.min,
-                        df.flatsPerEntrance.max,
-                        (min, max) => {
-                            df.flatsPerEntrance.min = min;
-                            df.flatsPerEntrance.max = max;
-                            const syncCheck = document.getElementById('sync-flats');
-                            if (syncCheck && syncCheck.checked) this.syncDistrictFilter(
-                                'flatsPerEntrance', district, min, max, prefix);
-                            this.applyFiltersDebounced();
-                            StateModule.updateURL();
-                        },
-                        flatsValues, { isGlobal: false }
-                    );
-                    const lblFl = flatsContainer.querySelector('.filter-range-label');
-                    if (lblFl) lblFl.textContent = 'КВ./ПОДЪЕЗД';
+					const floorsCtrl = new RangeSlider(
+						floorsContainer,
+						globalFloorsMin,
+						globalFloorsMax,
+						df.floors.min,
+						df.floors.max,
+						(min, max) => {
+							df.floors.min = min;
+							df.floors.max = max;
+							const syncCheck = document.getElementById('sync-floors');
+							if (syncCheck && syncCheck.checked) this.syncDistrictFilter('floors', district, min, max, prefix);
+							this.applyFiltersDebounced();
+							StateModule.updateURL();
+						},
+						floorsValues, { isGlobal: false }
+					);
+					const lblF = floorsContainer.querySelector('.filter-range-label');
+					if (lblF) lblF.textContent = 'ЭТАЖНОСТЬ';
 
-                    this[sliderStorageKey][district].floors = floorsCtrl;
-                    this[sliderStorageKey][district].flatsPerEntrance = flatsCtrl;
-                });
-            },
+					const flatsCtrl = new RangeSlider(
+						flatsContainer,
+						globalFlatsMin,
+						globalFlatsMax,
+						df.flatsPerEntrance.min,
+						df.flatsPerEntrance.max,
+						(min, max) => {
+							df.flatsPerEntrance.min = min;
+							df.flatsPerEntrance.max = max;
+							const syncCheck = document.getElementById('sync-flats');
+							if (syncCheck && syncCheck.checked) this.syncDistrictFilter('flatsPerEntrance', district, min, max, prefix);
+							this.applyFiltersDebounced();
+							StateModule.updateURL();
+						},
+						flatsValues, { isGlobal: false }
+					);
+					const lblFl = flatsContainer.querySelector('.filter-range-label');
+					if (lblFl) lblFl.textContent = 'КВ./ПОДЪЕЗД';
+
+					this[sliderStorageKey][district].floors = floorsCtrl;
+					this[sliderStorageKey][district].flatsPerEntrance = flatsCtrl;
+				});
+			},
 
             syncDistrictFilter(type, sourceDistrict, min, max, prefix) {
                 const districts = Object.keys(districtFilters);
@@ -2726,39 +2724,39 @@
                 });
             },
 
-            updateDistrictStats() {
-                const districts = Object.keys(districtFilters);
-                districts.forEach(district => {
-                    const totalInDistrict = allBuildings
-                        .filter(b => b.district === district)
-                        .reduce((sum, b) => sum + (b.entrances || 0), 0);
-                    const selectedInDistrict = displayedBuildings
-                        .filter(b => b.district === district)
-                        .reduce((sum, b) => sum + (b.entrances || 0), 0);
+			updateDistrictStats() {
+				const districts = Object.keys(districtFilters);
+				districts.forEach(district => {
+					const totalInDistrict = allBuildings
+						.filter(b => b.district === district)
+						.reduce((sum, b) => sum + (b.entrances || 0), 0);
+					const selectedInDistrict = displayedBuildings
+						.filter(b => b.district === district)
+						.reduce((sum, b) => sum + (b.entrances || 0), 0);
 
-                    const statsEl = document.getElementById(`district-stats-${district}`);
-                    if (statsEl) {
-                        statsEl.innerHTML =
-                            `<i class="fas fa-building"></i> <span class="selected-stands">${selectedInDistrict}</span> из <span class="total-stands">${totalInDistrict}</span>`;
-                        const block = statsEl.closest('.district-filter-block');
-                        if (block) {
-                            if (selectedInDistrict === 0) block.classList.add('district-empty');
-                            else block.classList.remove('district-empty');
-                        }
-                    }
+					const statsEl = document.getElementById(`district-stats-${district}`);
+					if (statsEl) {
+						statsEl.innerHTML =
+							`<i class="fas fa-columns"></i> <span class="selected-stands">${selectedInDistrict}</span> из <span class="total-stands">${totalInDistrict}</span>`;
+						const block = statsEl.closest('.district-filter-block');
+						if (block) {
+							if (selectedInDistrict === 0) block.classList.add('district-empty');
+							else block.classList.remove('district-empty');
+						}
+					}
 
-                    const statsElMobile = document.getElementById(`mobile-district-stats-${district}`);
-                    if (statsElMobile) {
-                        statsElMobile.innerHTML =
-                            `<i class="fas fa-building"></i> <span class="selected-stands">${selectedInDistrict}</span> из <span class="total-stands">${totalInDistrict}</span>`;
-                        const blockMobile = statsElMobile.closest('.district-filter-block-mobile');
-                        if (blockMobile) {
-                            if (selectedInDistrict === 0) blockMobile.classList.add('district-empty');
-                            else blockMobile.classList.remove('district-empty');
-                        }
-                    }
-                });
-            },
+					const statsElMobile = document.getElementById(`mobile-district-stats-${district}`);
+					if (statsElMobile) {
+						statsElMobile.innerHTML =
+							`<i class="fas fa-columns"></i> <span class="selected-stands">${selectedInDistrict}</span> из <span class="total-stands">${totalInDistrict}</span>`;
+						const blockMobile = statsElMobile.closest('.district-filter-block-mobile');
+						if (blockMobile) {
+							if (selectedInDistrict === 0) blockMobile.classList.add('district-empty');
+							else blockMobile.classList.remove('district-empty');
+						}
+					}
+				});
+			},
 
             resetFilters() {
                 hiddenBuildings.clear();
