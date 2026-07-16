@@ -245,7 +245,7 @@
     }
 
     // ================================================================
-    // ВСТРОЕННАЯ БИБЛИОТЕКА lz-string (ПОЛНАЯ ВЕРСИЯ)
+    // ВСТРОЕННАЯ БИБЛИОТЕКА lz-string (ИСПРАВЛЕННАЯ)
     // ================================================================
     var LZString = function() {
         var r = String.fromCharCode,
@@ -434,16 +434,16 @@
         };
         return i
     }();
-	"function" == typeof define && define.amd ? define(function() { return LZString }) : "undefined" != typeof module && null != module ? module.exports = LZString : null;
+    // ИСПРАВЛЕННАЯ СТРОКА:
+    "function" == typeof define && define.amd ? define(function() { return LZString }) : "undefined" != typeof module && null != module ? module.exports = LZString : null;
 
     // ================================================================
-    // ОПРЕДЕЛЕНИЕ ТАРИФНОЙ ВЕРСИИ И ГОРОДА ИЗ ПУТИ
+    // ТАРИФЫ (определяются позже)
     // ================================================================
     let TARIFF_VERSION = 'standart';
     let currentCity = 'R62';
     let citiesList = [];
 
-    // Функция получения тарифов
     function getPricingRules(version) {
         const tiers = {
             standart: [
@@ -464,7 +464,6 @@
         return tiers[version] || tiers.standart;
     }
 
-    // Отображаем тариф в интерфейсе
     document.addEventListener('DOMContentLoaded', function() {
         const badges = document.querySelectorAll('.tariff-badge');
         badges.forEach(badge => {
@@ -492,7 +491,7 @@
             MIN_STANDS: 100,
             get TIERS() { return getPricingRules(TARIFF_VERSION); }
         },
-        BASE_URL: 'https://coolobok.github.io/address/'
+        BASE_URL: 'https://coolobok.github.io/test2/'  // <-- замените на ваш путь
     };
 
     // ================================================================
@@ -3466,7 +3465,7 @@
     };
 
     // ================================================================
-    // МОДУЛЬ СОСТОЯНИЯ (ОБНОВЛЁННЫЙ — ТОЛЬКО ФИЛЬТРЫ)
+    // МОДУЛЬ СОСТОЯНИЯ (ОБНОВЛЁННЫЙ — ТОЛЬКО ФИЛЬТРЫ, С ХЕШЕМ)
     // ================================================================
     const StateModule = {
         currentDataHash: null,
@@ -3563,7 +3562,7 @@
             } catch (e) { return null; }
         },
 
-        // Обновление URL: путь с кодом + state
+        // Обновление URL: хеш + state
         updateURL() {
             const state = this.collectCurrentState();
             const encoded = this.encodeState(state);
@@ -3572,9 +3571,8 @@
             const tariffLetterMap = { premium: 'm', sale: 'e', standart: 't' };
             const letter = tariffLetterMap[TARIFF_VERSION] || 't';
             const cityCode = currentCity.replace('R', '');
-            const newPath = `/${letter}${cityCode}`;
-            const newURL = newPath + '?state=' + encodeURIComponent(encoded);
-            window.history.replaceState({ state: encoded }, '', newURL);
+            const newHash = `#/${letter}${cityCode}?state=${encodeURIComponent(encoded)}`;
+            window.history.replaceState({ state: encoded }, '', newHash);
         },
 
         generateShareableURL() {
@@ -3586,7 +3584,7 @@
             const letter = tariffLetterMap[TARIFF_VERSION] || 't';
             const cityCode = currentCity.replace('R', '');
             const base = CONFIG.BASE_URL.replace(/\/+$/, '');
-            return `${base}/${letter}${cityCode}?state=${encodeURIComponent(encoded)}`;
+            return `${base}/#/${letter}${cityCode}?state=${encodeURIComponent(encoded)}`;
         },
 
         // Применение состояния (только фильтры, маркеры, синхронизация)
@@ -3629,7 +3627,6 @@
 
             this.updateUIFromState(state);
             FilterModule.updateVisibility();
-            // Обновляем слайдеры районов
             setTimeout(() => {
                 if (state.districtFilters) {
                     Object.keys(state.districtFilters).forEach(district => {
@@ -3643,7 +3640,6 @@
                     FilterModule.applyFiltersDebounced();
                 }
             }, 200);
-            // Обновляем URL (чтобы путь и state синхронизировались)
             this.updateURL();
         },
 
@@ -3829,7 +3825,7 @@
     }
 
     // ================================================================
-    // ПЕРЕКЛЮЧЕНИЕ ГОРОДОВ (ОБНОВЛЁННОЕ)
+    // ПЕРЕКЛЮЧЕНИЕ ГОРОДОВ (ОБНОВЛЁННОЕ — ХЕШ)
     // ================================================================
     async function switchCity(cityId) {
         if (isLoadingCity) return;
@@ -3843,12 +3839,12 @@
             cityCenter = center;
             currentCity = cityId;
 
-            // Обновляем путь
+            // Обновляем хеш
             const tariffLetterMap = { premium: 'm', sale: 'e', standart: 't' };
             const letter = tariffLetterMap[TARIFF_VERSION] || 't';
             const cityCode = currentCity.replace('R', '');
-            const newPath = `/${letter}${cityCode}`;
-            window.history.replaceState(null, '', newPath + window.location.search);
+            const newHash = `#/${letter}${cityCode}`;
+            window.history.replaceState(null, '', newHash + window.location.search);
 
             const floorsSet = new Set();
             const flatsSet = new Set();
@@ -3900,17 +3896,18 @@
     }
 
     // ================================================================
-    // ИНИЦИАЛИЗАЦИЯ ПРИЛОЖЕНИЯ (ОБНОВЛЁННАЯ)
+    // ИНИЦИАЛИЗАЦИЯ ПРИЛОЖЕНИЯ (ОБНОВЛЁННАЯ — ХЕШ, ЗАГЛУШКА)
     // ================================================================
     async function initApp() {
         const overlay = document.getElementById('version-overlay');
         if (overlay) overlay.style.display = 'none';
 
-        // 1. Парсим путь /m62, /e62, /t62
-        const path = window.location.pathname;
-        const pathMatch = path.match(/^\/([met])(\d+)/);
+        // 1. Парсим хеш вида #/m62, #/e62, #/t62
+        const hash = window.location.hash.replace(/^#\/?/, ''); // убираем # и /
+        const pathMatch = hash.match(/^([met])(\d+)/);
+
         if (!pathMatch) {
-            // Нет кода в пути → заглушка
+            // Хеш пустой или не соответствует формату → заглушка
             try { await DataModule.loadContacts(); } catch (e) {}
             showVersionOverlay(contacts.email);
             return;
@@ -3940,9 +3937,10 @@
             badge.textContent = TARIFF_VERSION.toUpperCase();
         });
 
-        // 5. Читаем параметр state (если есть)
-        const urlParams = new URLSearchParams(window.location.search);
-        const stateParam = urlParams.get('state');
+        // 5. Читаем параметр state (из хеша или URL)
+        const searchParams = new URLSearchParams(window.location.search);
+        const hashParams = new URLSearchParams(hash.split('?')[1] || '');
+        const stateParam = searchParams.get('state') || hashParams.get('state');
         let state = null;
         if (stateParam) {
             state = StateModule.decodeState(stateParam);
@@ -3975,17 +3973,14 @@
         PercentageModule.initPercentageSelector();
         HistoryModule.init();
 
-        // 7. Применяем состояние (если есть)
         if (state) {
             StateModule.applyState(state);
         } else {
             FilterModule.applyFilters();
         }
 
-        // 8. Обновляем URL (синхронизируем путь и state)
         StateModule.updateURL();
 
-        // 9. Настройка UI событий
         setupUIEvents();
         setupResponsive();
         initResizableSidebar();
