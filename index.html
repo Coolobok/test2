@@ -747,8 +747,8 @@
         async listCities() {
             return [
                 { id: 'R62', name: 'Рязань' },
-                { id: 'R77', name: 'Москва' },
-                { id: 'R78', name: 'Санкт-Петербург' }
+                { id: 'R71', name: 'Тула' },
+                { id: 'R69', name: 'Тверь' }
             ];
         },
 
@@ -3134,7 +3134,7 @@
             report +=
                 `\r\n\r\n🔗 ВРЕМЕННАЯ ССЫЛКА НА НАСТРОЙКИ:\r\n${shareableURL || 'Не удалось сгенерировать'}\r\n\r\n⚠️ Ссылка временная, актуальна пока данные не обновлены.\r\n`;
             report +=
-                `\r\nПРИМЕЧАНИЕ:\r\n• Минимум для расчёта: ${CONFIG.PRICING_RULES.MIN_STANDS} стендов\r\n• Отчёт сформирован автоматически в PR МАРКЕТ Рязань (${TARIFF_VERSION})`;
+                `\r\nПРИМЕЧАНИЕ:\r\n• Минимум для расчёта: ${CONFIG.PRICING_RULES.MIN_STANDS} стендов\r\n• Отчёт сформирован автоматически в PR МАРКЕТ (${TARIFF_VERSION})`;
             return report;
         },
 
@@ -3230,7 +3230,7 @@
             rows.push([]);
             rows.push([]);
             rows.push(
-                ['Примечание', `Минимум для расчёта: ${CONFIG.PRICING_RULES.MIN_STANDS} стендов; Отчёт сформирован автоматически в PR МАРКЕТ Рязань (${TARIFF_VERSION})`]
+                ['Примечание', `Минимум для расчёта: ${CONFIG.PRICING_RULES.MIN_STANDS} стендов; Отчёт сформирован автоматически в PR МАРКЕТ (${TARIFF_VERSION})`]
                 );
             rows.push([]);
             return rows.map(row => row.join('\t')).join('\n');
