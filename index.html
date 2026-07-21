@@ -3839,8 +3839,6 @@
             cityCenter = center;
             currentCity = cityId;
 
-			console.log(`[${sheetName}] center from CSV:`, center);
-
             // Обновляем хеш
             const tariffLetterMap = { premium: 'm', sale: 'e', standart: 't' };
             const letter = tariffLetterMap[TARIFF_VERSION] || 't';
