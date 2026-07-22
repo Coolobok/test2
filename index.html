@@ -2921,108 +2921,158 @@
     // ================================================================
     // МОДУЛЬ СПИСКА
     // ================================================================
-    const ListModule = {
-        getStandsText(count) {
-            const lastDigit = count % 10;
-            const lastTwo = count % 100;
-            if (lastTwo >= 11 && lastTwo <= 14) return 'стендов';
-            if (lastDigit === 1) return 'стенд';
-            if (lastDigit >= 2 && lastDigit <= 4) return 'стенда';
-            return 'стендов';
-        },
-        getFlatsText(count) {
-            const lastDigit = count % 10;
-            const lastTwo = count % 100;
-            if (lastTwo >= 11 && lastTwo <= 14) return 'кв.';
-            if (lastDigit === 1) return 'кв.';
-            if (lastDigit >= 2 && lastDigit <= 4) return 'кв.';
-            return 'кв.';
-        },
-        renderBuildingsList(containerId, buildings, append = false) {
-            const container = document.getElementById(containerId);
-            if (!container) return;
-            if (!append) container.innerHTML = '';
-            buildings.forEach(building => {
-                const item = document.createElement('div');
-                item.className = 'building-item';
-                item.dataset.id = building.id;
-                const shortDistrict = Utils.shortenDistrictName(building.district);
-                const statusClass = building.status === 'Свободно' ? 'status-free' : 'status-busy';
-                item.innerHTML = `
-                    <div class="building-header">
-                        <span class="building-status"><span class="status-indicator ${statusClass}"></span></span>
-                        <span class="building-address">${Utils.escapeHtml(building.address)}</span>
-                        <button class="building-hide" onclick="handleHideBuilding(${building.id}, event)">×</button>
-                    </div>
-                    <div class="building-details">
-                        <span><i class="fas fa-city"></i> ${Utils.escapeHtml(shortDistrict)}</span>
-                        <span><i class="fas fa-columns"></i> ${building.entrances} ${this.getStandsText(building.entrances)}</span>
-                        <span><i class="fas fa-door-closed"></i> ${building.flats} ${this.getFlatsText(building.flats)}</span>
-                    </div>
-                `;
-                item.addEventListener('click', (e) => {
-                    if (e.target.classList.contains('building-hide') || e.target.closest(
-                        '.building-hide')) return;
-                    if (!map) return;
-                    const lat = building.lat;
-                    const lng = building.lng;
-                    const statusClass = building.status === 'Свободно' ? 'status-free' :
-                        'status-busy';
-                    const shortDistrict = Utils.shortenDistrictName(building.district);
-                    const balloonContent = `
-                        <div class="single-balloon">
-                            <div class="single-balloon-header">
-                                <div class="single-balloon-title"><span class="status-indicator ${statusClass}"></span><span>${Utils.escapeHtml(building.address)}</span></div>
-                                <button class="single-balloon-close-btn" title="Закрыть">×</button>
-                            </div>
-                            <div class="single-balloon-content">
-                                <div class="single-balloon-stats">
-                                    <div class="single-stat-item"><div class="single-stat-label">РАЙОН</div><div class="single-stat-value"><i class="fas fa-city"></i> ${Utils.escapeHtml(shortDistrict)}</div></div>
-                                    <div class="single-stat-item"><div class="single-stat-label">СТЕНДОВ</div><div class="single-stat-value stands"><i class="fas fa-columns"></i> ${building.entrances}</div></div>
-                                    <div class="single-stat-item"><div class="single-stat-label">КВАРТИР</div><div class="single-stat-value"><i class="fas fa-door-closed"></i> ${building.flats}</div></div>
-                                    <div class="single-stat-item"><div class="single-stat-label">ЭТАЖЕЙ</div><div class="single-stat-value"><i class="fas fa-building"></i> ${building.floors}</div></div>
-                                </div>
-                                <button class="single-balloon-hide-btn" onclick="handleHideBuilding(${building.id})"><i class="fas fa-times"></i> Скрыть адрес</button>
-                            </div>
-                        </div>
-                    `;
-                    map.setCenter([lat, lng], 17);
-                    map.balloon.open([lat, lng], balloonContent, { closeButton: false,
-                        autoPan: true, autoPanMargin: [80, 80, 80, 80], offset: [0, -15] });
-                    setTimeout(() => {
-                        const closeBtn = document.querySelector(
-                            '.single-balloon-close-btn');
-                        if (closeBtn) closeBtn.addEventListener('click', (e) => { e
-                                .stopPropagation();
-                            e.preventDefault();
-                            map.balloon.close(); });
-                    }, 50);
-                    if (isMobile) Utils.setMobileView('map');
-                });
-                container.appendChild(item);
-            });
-            this.updateLoadMoreButton(containerId);
-        },
-        updateLoadMoreButton(containerId) {
-            const btnId = containerId.startsWith('desktop-') ? 'desktop-load-more' : 'load-more';
-            const btn = document.getElementById(btnId);
-            if (!btn) return;
-            const container = document.getElementById(containerId);
-            const current = container ? container.children.length : 0;
-            const hasMore = current < displayedBuildings.length;
-            btn.style.display = hasMore ? 'block' : 'none';
-            btn.textContent = `Показать еще (${Math.min(20, displayedBuildings.length - current)})`;
-        },
-        loadMoreBuildings(isDesktop = false) {
-            const containerId = isDesktop ? 'desktop-building-list' : 'building-list';
-            const container = document.getElementById(containerId);
-            if (!container) return;
-            const current = container.children.length;
-            const next = displayedBuildings.slice(current, current + 20);
-            if (next.length) this.renderBuildingsList(containerId, next, true);
-        }
-    };
+	const ListModule = {
+		getStandsText(count) {
+			const lastDigit = count % 10;
+			const lastTwo = count % 100;
+			if (lastTwo >= 11 && lastTwo <= 14) return 'стендов';
+			if (lastDigit === 1) return 'стенд';
+			if (lastDigit >= 2 && lastDigit <= 4) return 'стенда';
+			return 'стендов';
+		},
 
+		getFlatsText(count) {
+			const lastDigit = count % 10;
+			const lastTwo = count % 100;
+			if (lastTwo >= 11 && lastTwo <= 14) return 'кв.';
+			if (lastDigit === 1) return 'кв.';
+			if (lastDigit >= 2 && lastDigit <= 4) return 'кв.';
+			return 'кв.';
+		},
+
+		buildBalloonContent(building) {
+			const statusClass = building.status === 'Свободно' ? 'status-free' : 'status-busy';
+			const shortDistrict = Utils.shortenDistrictName(building.district);
+			return `
+				<div class="single-balloon">
+					<div class="single-balloon-header">
+						<div class="single-balloon-title">
+							<span class="status-indicator ${statusClass}"></span>
+							<span>${Utils.escapeHtml(building.address)}</span>
+						</div>
+						<button class="single-balloon-close-btn" title="Закрыть">×</button>
+					</div>
+					<div class="single-balloon-content">
+						<div class="single-balloon-stats">
+							<div class="single-stat-item"><div class="single-stat-label">РАЙОН</div><div class="single-stat-value"><i class="fas fa-city"></i> ${Utils.escapeHtml(shortDistrict)}</div></div>
+							<div class="single-stat-item"><div class="single-stat-label">СТЕНДОВ</div><div class="single-stat-value stands"><i class="fas fa-columns"></i> ${building.entrances}</div></div>
+							<div class="single-stat-item"><div class="single-stat-label">КВАРТИР</div><div class="single-stat-value"><i class="fas fa-door-closed"></i> ${building.flats}</div></div>
+							<div class="single-stat-item"><div class="single-stat-label">ЭТАЖЕЙ</div><div class="single-stat-value"><i class="fas fa-building"></i> ${building.floors}</div></div>
+						</div>
+						<button class="single-balloon-hide-btn" onclick="handleHideBuilding(${building.id})"><i class="fas fa-times"></i> Скрыть адрес</button>
+					</div>
+				</div>
+			`;
+		},
+
+		renderBuildingsList(containerId, buildings, append = false) {
+			const container = document.getElementById(containerId);
+			if (!container) return;
+			if (!append) container.innerHTML = '';
+
+			buildings.forEach(building => {
+				const item = document.createElement('div');
+				item.className = 'building-item';
+				item.dataset.id = building.id;
+
+				const shortDistrict = Utils.shortenDistrictName(building.district);
+				const statusClass = building.status === 'Свободно' ? 'status-free' : 'status-busy';
+
+				item.innerHTML = `
+					<div class="building-header">
+						<span class="building-status"><span class="status-indicator ${statusClass}"></span></span>
+						<span class="building-address">${Utils.escapeHtml(building.address)}</span>
+						<button class="building-hide" onclick="handleHideBuilding(${building.id}, event)">×</button>
+					</div>
+					<div class="building-details">
+						<span><i class="fas fa-city"></i> ${Utils.escapeHtml(shortDistrict)}</span>
+						<span><i class="fas fa-columns"></i> ${building.entrances} ${this.getStandsText(building.entrances)}</span>
+						<span><i class="fas fa-door-closed"></i> ${building.flats} ${this.getFlatsText(building.flats)}</span>
+					</div>
+				`;
+
+				// === НОВЫЙ ОБРАБОТЧИК КЛИКА ===
+				item.addEventListener('click', (e) => {
+					if (e.target.classList.contains('building-hide') || e.target.closest('.building-hide')) return;
+					if (!map) return;
+
+					const lat = building.lat;
+					const lng = building.lng;
+					if (!lat || !lng) {
+						Utils.showNotification('У этого адреса нет координат', 'error');
+						return;
+					}
+
+					// Закрываем все балуны
+					if (map.balloon.isOpen()) map.balloon.close();
+					if (objectManager && objectManager.clusters) {
+						objectManager.clusters.balloon.close();
+					}
+
+					// Переключаем на карту, если мобильный вид
+					if (isMobile) Utils.setMobileView('map');
+
+					// Центрируем карту
+					map.setCenter([lat, lng], 17, {
+						checkZoomRange: true,
+						duration: 300
+					});
+
+					// Открываем балун после завершения анимации
+					const onActionEnd = () => {
+						map.events.remove('actionend', onActionEnd);
+						setTimeout(() => {
+							const balloonContent = this.buildBalloonContent(building);
+							map.balloon.open([lat, lng], balloonContent, {
+								closeButton: false,
+								autoPan: true,
+								autoPanMargin: [80, 80, 80, 80],
+								offset: [0, -15]
+							});
+
+							// Обработчик закрытия
+							setTimeout(() => {
+								const closeBtn = document.querySelector('.single-balloon-close-btn');
+								if (closeBtn) {
+									closeBtn.addEventListener('click', (e) => {
+										e.stopPropagation();
+										e.preventDefault();
+										map.balloon.close();
+									});
+								}
+							}, 100);
+						}, 200);
+					};
+
+					map.events.add('actionend', onActionEnd);
+				});
+
+				container.appendChild(item);
+			});
+
+			this.updateLoadMoreButton(containerId);
+		},
+
+		updateLoadMoreButton(containerId) {
+			const btnId = containerId.startsWith('desktop-') ? 'desktop-load-more' : 'load-more';
+			const btn = document.getElementById(btnId);
+			if (!btn) return;
+			const container = document.getElementById(containerId);
+			const current = container ? container.children.length : 0;
+			const hasMore = current < displayedBuildings.length;
+			btn.style.display = hasMore ? 'block' : 'none';
+			btn.textContent = `Показать еще (${Math.min(20, displayedBuildings.length - current)})`;
+		},
+
+		loadMoreBuildings(isDesktop = false) {
+			const containerId = isDesktop ? 'desktop-building-list' : 'building-list';
+			const container = document.getElementById(containerId);
+			if (!container) return;
+			const current = container.children.length;
+			const next = displayedBuildings.slice(current, current + 20);
+			if (next.length) this.renderBuildingsList(containerId, next, true);
+		}
+	};
     // ================================================================
     // МОДУЛЬ ОТЧЁТА (ПОЛНАЯ ВЕРСИЯ)
     // ================================================================
